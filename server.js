@@ -74,6 +74,23 @@ app.get("/api/images", async (req, res) => {
     // Manually slice the results for pagination
     const paginatedResources = result.resources.slice(offset, offset + parseInt(limit));
 
+    // Helper function to determine height category based on aspect ratio
+    const getHeightCategory = (width, height) => {
+      if (!width || !height) return "square";
+      
+      const aspectRatio = height / width;
+      
+      // Portrait/Vertical images (taller than wide)
+      if (aspectRatio > 1.4) return "tall";        // Very tall images (6 row spans)
+      if (aspectRatio > 1.15) return "medium";     // Moderately tall (5 row spans)
+      
+      // Landscape/Horizontal images (wider than tall)
+      if (aspectRatio < 0.7) return "short";       // Very wide images (3 row spans)
+      
+      // Square-ish images (roughly equal dimensions)
+      return "square";                              // Square images (4 row spans)
+    };
+
     const images = paginatedResources
       .filter((img) => img.tags && img.tags.length > 0)
       .map((img) => ({
@@ -81,7 +98,9 @@ app.get("/api/images", async (req, res) => {
         title: img.context?.caption || img.public_id,
         category: img.tags[0],
         blobUrl: img.secure_url,
-        height: img.context?.custom?.height || "square",
+        height: getHeightCategory(img.width, img.height),
+        // Include dimensions for debugging (optional)
+        dimensions: { width: img.width, height: img.height },
       }));
 
     const responseData = {
