@@ -2,20 +2,12 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const cloudinary = require("cloudinary").v2;
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 const app = express();
 
-// Configure Nodemailer with Gmail SMTP
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // use STARTTLS
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+// Configure Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Middleware
 app.use(cors());
@@ -145,11 +137,11 @@ app.post("/api/send-email", async (req, res) => {
       });
     }
 
-    // Send email using Nodemailer
-    const mailOptions = {
-      from: `"Shameem Photography" <${process.env.GMAIL_USER}>`,
-      to: "info@shaszstudios.nl",
-      replyTo: email, // Allow direct reply to customer
+    // Send email using Resend
+    const data = await resend.emails.send({
+      from: 'onboarding@resend.dev', // Make sure to verify domain in Resend dashboard for custom domain
+      to: 'info@shaszstudios.nl',
+      reply_to: email, // Allow direct reply to customer
       subject: `New Booking Request - ${shootType} on ${date}`,
       html: `
         <!DOCTYPE html>
@@ -214,15 +206,18 @@ app.post("/api/send-email", async (req, res) => {
           </body>
         </html>
       `,
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
+    if (data.error) {
+       console.error("❌ Resend API Error:", data.error);
+       throw new Error(data.error.message);
+    }
 
-    console.log("✅ Email sent successfully:", info.messageId);
+    console.log("✅ Email sent successfully:", data.id);
     res.json({ 
       success: true, 
       message: "Booking email sent successfully",
-      messageId: info.messageId 
+      messageId: data.id 
     });
 
   } catch (error) {
