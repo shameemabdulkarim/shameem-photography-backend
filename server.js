@@ -139,7 +139,7 @@ app.post("/api/send-email", async (req, res) => {
 
     // Send email using Resend
     const data = await resend.emails.send({
-      from: 'onboarding@resend.dev', // Make sure to verify domain in Resend dashboard for custom domain
+      from: 'info@shaszstudios.nl', 
       to: 'info@shaszstudios.nl',
       reply_to: email, // Allow direct reply to customer
       subject: `New Booking Request - ${shootType} on ${date}`,
