@@ -165,7 +165,7 @@ app.post("/api/send-email", async (req, res) => {
             <div class="container">
               <div class="header">
                 <h1 style="margin: 0;">📸 New Booking Request</h1>
-                <p style="margin: 10px 0 0 0; opacity: 0.9;">Shameem Photography</p>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Shasz Studios</p>
               </div>
               <div class="content">
                 <div class="field">
@@ -214,7 +214,7 @@ app.post("/api/send-email", async (req, res) => {
       resend.emails.send({
         from: 'info@shaszstudios.nl',
         to: email,
-        subject: `Booking Request Received - Shameem Photography`,
+        subject: `Booking Request Received - Shasz Studios`,
         html: `
         <!DOCTYPE html>
         <html>
@@ -238,7 +238,7 @@ app.post("/api/send-email", async (req, res) => {
             <div class="container">
               <div class="header">
                 <h1 style="margin: 0;">Booking Received!</h1>
-                <p style="margin: 10px 0 0 0; opacity: 0.9;">Shameem Photography</p>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Shasz Studios</p>
               </div>
               <div class="content">
                 <div class="message-box">
@@ -271,7 +271,7 @@ app.post("/api/send-email", async (req, res) => {
 
                 <div class="footer">
                   <p>Have questions? Reply correctly to this email.</p>
-                  <p>Thanks for choosing Shameem Photography!</p>
+                  <p>Thanks for choosing Shasz Studios!</p>
                   <div class="social-links">
                     <a href="https://shaszstudios.nl" class="social-link">Website</a> | 
                     <a href="https://instagram.com/shaszstudios" class="social-link">Instagram</a>
