@@ -138,12 +138,15 @@ app.post("/api/send-email", async (req, res) => {
     }
 
     // Send email using Resend
-    const data = await resend.emails.send({
-      from: 'info@shaszstudios.nl', 
-      to: 'info@shaszstudios.nl',
-      reply_to: email, // Allow direct reply to customer
-      subject: `New Booking Request - ${shootType} on ${date}`,
-      html: `
+    // Send emails in parallel
+    const [adminEmail, userEmail] = await Promise.all([
+      // Admin Notification
+      resend.emails.send({
+        from: 'info@shaszstudios.nl',
+        to: 'info@shaszstudios.nl',
+        reply_to: email, 
+        subject: `New Booking Request - ${shootType} on ${date}`,
+        html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -206,18 +209,92 @@ app.post("/api/send-email", async (req, res) => {
           </body>
         </html>
       `,
-    });
+      }),
+      // User Acknowledgment
+      resend.emails.send({
+        from: 'info@shaszstudios.nl',
+        to: email,
+        subject: `Booking Request Received - Shameem Photography`,
+        html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+              .message-box { background: white; padding: 20px; border-radius: 5px; border-left: 4px solid #14b8a6; margin-bottom: 20px; }
+              .summary-title { font-weight: bold; color: #0f766e; margin-bottom: 10px; font-size: 1.1em; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+              .summary-item { margin-bottom: 8px; display: flex; }
+              .summary-label { font-weight: bold; width: 120px; color: #4b5563; }
+              .summary-value { flex: 1; color: #111827; }
+              .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+              .social-links { margin-top: 15px; }
+              .social-link { display: inline-block; margin: 0 5px; color: #14b8a6; text-decoration: none; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 style="margin: 0;">Booking Received!</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Shameem Photography</p>
+              </div>
+              <div class="content">
+                <div class="message-box">
+                  <p style="margin-top: 0;">Dear ${name},</p>
+                  <p>Thank you for your booking request! I have received your inquiry and will get back to you as soon as possible to confirm the details.</p>
+                  <p style="margin-bottom: 0;">In the meantime, here is a summary of your request:</p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 5px;">
+                  <div class="summary-title">Booking Details</div>
+                  <div class="summary-item">
+                    <span class="summary-label">Date:</span>
+                    <span class="summary-value">${date}</span>
+                  </div>
+                  ${timeSlot ? `
+                  <div class="summary-item">
+                    <span class="summary-label">Time Slot:</span>
+                    <span class="summary-value">${timeSlot}</span>
+                  </div>
+                  ` : ''}
+                  <div class="summary-item">
+                    <span class="summary-label">Session Type:</span>
+                    <span class="summary-value">${shootType}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Package:</span>
+                    <span class="summary-value">${packageName}</span>
+                  </div>
+                </div>
 
-    if (data.error) {
-       console.error("❌ Resend API Error:", data.error);
-       throw new Error(data.error.message);
+                <div class="footer">
+                  <p>Have questions? Reply correctly to this email.</p>
+                  <p>Thanks for choosing Shameem Photography!</p>
+                  <div class="social-links">
+                    <a href="https://shaszstudios.nl" class="social-link">Website</a> | 
+                    <a href="https://instagram.com/shaszstudios" class="social-link">Instagram</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+        `
+      })
+    ]);
+
+    if (adminEmail.error || userEmail.error) {
+       console.error("❌ Resend API Error:", adminEmail.error || userEmail.error);
+       throw new Error(adminEmail.error?.message || userEmail.error?.message);
     }
 
-    console.log("✅ Email sent successfully:", data.id);
+    console.log("✅ Emails sent successfully. Admin ID:", adminEmail.data?.id, "User ID:", userEmail.data?.id);
     res.json({ 
       success: true, 
-      message: "Booking email sent successfully",
-      messageId: data.id 
+      message: "Booking emails sent successfully",
+      messageId: adminEmail.data?.id 
     });
 
   } catch (error) {
