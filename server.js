@@ -9,8 +9,34 @@ const app = express();
 // Configure Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Middleware
-app.use(cors());
+// CORS configuration
+const allowedOrigins = [
+  'https://shaszstuidos.nl',
+  'https://www.shaszstuidos.nl',
+  'https://shaszstudios.nl',
+  'https://www.shaszstudios.nl',
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`⚠️ CORS blocked origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
+
 app.use(express.json()); // Parse JSON request bodies
 
 cloudinary.config({
